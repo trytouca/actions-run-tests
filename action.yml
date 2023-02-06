@@ -1,0 +1,17 @@
+name: 'Touca - Run Tests'
+description: 'Runs Touca Tests in your GitHub Actions workflow using the Touca CLI'
+inputs:
+  version:
+    description: 'Version of the code under test'
+    required: false
+  directory:
+    description: 'Directory where Touca tests are placed'
+    required: false
+runs:
+  using: "composite"
+  steps:
+    - run: touca test --revision="${{ inputs.version }}" --testdir="${{ inputs.directory }}"
+      shell: bash
+branding:
+  icon: 'terminal'
+  color: 'blue'
