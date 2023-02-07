@@ -1,17 +1,21 @@
+# Copyright 2023 Touca, Inc. Subject to Apache-2.0 License.
+
 name: 'Touca - Run Tests'
 description: 'Runs Touca Tests in your GitHub Actions workflow using the Touca CLI'
+author: 'Touca, Inc.'
 inputs:
   version:
     description: 'Version of the code under test'
     required: false
   directory:
-    description: 'Directory where Touca tests are placed'
+    description: 'Directory where Touca tests are located'
+    required: false
+  executable:
+    description: 'Test executable to use instead of Touca CLI'
     required: false
 runs:
-  using: "composite"
-  steps:
-    - run: touca test --revision="${{ inputs.version }}" --testdir="${{ inputs.directory }}"
-      shell: bash
+  using: 'node16'
+  main: 'dist/index.js'
 branding:
   icon: 'terminal'
   color: 'blue'
