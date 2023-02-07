@@ -32,6 +32,7 @@
     "semi": false,
     "singleQuote": true,
     "trailingComma": "none",
-    "htmlWhitespaceSensitivity": "ignore"
+    "htmlWhitespaceSensitivity": "ignore",
+    "proseWrap": "always"
   }
 }
