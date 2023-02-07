@@ -8,7 +8,10 @@ inputs:
     description: 'Version of the code under test'
     required: false
   directory:
-    description: 'Directory to Touca tests to run'
+    description: 'Directory where Touca tests are located'
+    required: false
+  executable:
+    description: 'Test executable to use instead of Touca CLI'
     required: false
 runs:
   using: 'node16'
