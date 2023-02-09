@@ -14,6 +14,36 @@ __nccwpck_require__.r(__webpack_exports__);
 // Copyright 2023 Touca, Inc. Subject to Apache-2.0 License.
 
 
+function parseReports(output) {
+    return [
+        {
+            suite: 'Students',
+            version: 'v1.0',
+            rows: [
+                { status: 'SENT', name: 'alice', time: '251 ms' },
+                { status: 'SENT', name: 'bob', time: '245 ms' },
+                { status: 'SENT', name: 'charlie', time: '220 ms' }
+            ],
+            link: 'http://localhost:4200/~/acme/students_2/v1.0'
+        }
+    ];
+}
+function printReport(report) {
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.summary.addHeading('Comparison Results for {}/{}', 2)
+        .addTable([
+        ['', 'Status', 'Name', 'Runtime'].map((v) => ({
+            data: v,
+            header: true
+        })),
+        ...report.rows.map((v, i) => [
+            (i + 1).toFixed(0),
+            v.status,
+            v.name,
+            v.time
+        ])
+    ])
+        .addLink('View comparison results on the Touca server', report.link);
+}
 async function runExe() {
     const args = [(0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('executable')];
     if ((0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('version') !== '') {
@@ -30,7 +60,21 @@ async function runCli() {
     if ((0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('directory') !== '') {
         args.push('--testdir', (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('directory'));
     }
-    await (0,_actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec)(args[0], args.slice(1));
+    const stream = { out: '', err: '' };
+    await (0,_actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec)(args[0], args.slice(1), {
+        listeners: {
+            stdout: (data) => {
+                stream.out += data.toString();
+            },
+            stderr: (data) => {
+                stream.err += data.toString();
+            }
+        }
+    });
+    await (0,_actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec)('touca', ['version']);
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.summary.addHeading('Regression Test Results');
+    parseReports(stream.out).forEach(printReport);
+    await _actions_core__WEBPACK_IMPORTED_MODULE_0__.summary.write();
 }
 try {
     await ((0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('executable') != '' ? runExe : runCli)();

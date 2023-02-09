@@ -25,8 +25,8 @@ function parseReports(output: string): Array<Report> {
   ]
 }
 
-async function printReport(report: Report) {
-  await summary
+function printReport(report: Report) {
+  summary
     .addHeading('Comparison Results for {}/{}', 2)
     .addTable([
       ['', 'Status', 'Name', 'Runtime'].map((v) => ({
@@ -41,7 +41,6 @@ async function printReport(report: Report) {
       ])
     ])
     .addLink('View comparison results on the Touca server', report.link)
-    .write()
 }
 
 async function runExe() {
@@ -73,10 +72,11 @@ async function runCli() {
       }
     }
   })
-  await summary.addHeading('Regression Test Results').write()
-  for (const report of parseReports(stream.out)) {
-    printReport(report)
-  }
+
+  await exec('touca', ['version'])
+  summary.addHeading('Regression Test Results')
+  parseReports(stream.out).forEach(printReport)
+  await summary.write()
 }
 
 try {
