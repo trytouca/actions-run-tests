@@ -1,7 +1,8 @@
 # Copyright 2023 Touca, Inc. Subject to Apache-2.0 License.
 
 name: 'Touca - Run Tests'
-description: 'Runs Touca Tests in your GitHub Actions workflow using the Touca CLI'
+description:
+  'Runs Touca Tests in your GitHub Actions workflow using the Touca CLI'
 author: 'Touca, Inc.'
 inputs:
   version:
@@ -13,6 +14,10 @@ inputs:
   executable:
     description: 'Test executable to use instead of Touca CLI'
     required: false
+  job_summary:
+    description: 'Produce GitHub Actions job summary'
+    required: false
+    default: true
 runs:
   using: 'node16'
   main: 'dist/index.js'
