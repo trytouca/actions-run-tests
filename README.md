@@ -2,6 +2,14 @@
 
 Plugin that helps you run Touca tests as part of GitHub Actions CI.
 
+## Example usage
+
+```yaml
+uses: trytouca/actions-run-tests@v1
+with:
+  directory: ./examples/python/02_python_main_api
+```
+
 ## Inputs
 
 ### `version`
@@ -24,12 +32,6 @@ Touca tests written in C++ that cannot be run via the Touca CLI.
 ### `job_summary`
 
 **Optional** Print test report summary as GitHub Actions Job Summary. Enabled by
-default.
+default. Here is a sample summary:
 
-## Example usage
-
-```yaml
-uses: trytouca/actions-run-tests@v1
-with:
-  directory: ./examples/python/02_python_main_api
-```
+![GitHub Actions Job Summary](https://touca.io/docs/external/assets/touca-github-actions-job-summary.dark.png)
