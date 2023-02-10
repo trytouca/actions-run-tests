@@ -21,6 +21,11 @@ directory. Assumes your tests are written using the Touca Python SDK.
 **Optional** Test executable to use instead of Touca CLI. Useful for running
 Touca tests written in C++ that cannot be run via the Touca CLI.
 
+### `job_summary`
+
+**Optional** Print test report summary as GitHub Actions Job Summary. Enabled by
+default.
+
 ## Example usage
 
 ```yaml

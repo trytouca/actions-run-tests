@@ -11,25 +11,119 @@ __nccwpck_require__.r(__webpack_exports__);
 /* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _actions_exec__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(514);
 /* harmony import */ var _actions_exec__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__nccwpck_require__.n(_actions_exec__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _summary__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(608);
 // Copyright 2023 Touca, Inc. Subject to Apache-2.0 License.
 
 
-function parseReports(output) {
-    return [
-        {
-            suite: 'Students',
-            version: 'v1.0',
-            rows: [
-                { status: 'SENT', name: 'alice', time: '251 ms' },
-                { status: 'SENT', name: 'bob', time: '245 ms' },
-                { status: 'SENT', name: 'charlie', time: '220 ms' }
-            ],
-            link: 'http://localhost:4200/~/acme/students_2/v1.0'
+
+function getArgsExe() {
+    const args = [(0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('executable')];
+    if ((0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('version') !== '') {
+        args.push('--revision', (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('version'));
+    }
+    return args;
+}
+function getArgsCli() {
+    const args = ['touca', 'test'];
+    if ((0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('version') !== '') {
+        args.push('--revision', (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('version'));
+    }
+    if ((0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('directory') !== '') {
+        args.push('--testdir', (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('directory'));
+    }
+    return args;
+}
+try {
+    const args = (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('executable') != '' ? getArgsExe() : getArgsCli();
+    const stream = { out: '', err: '' };
+    await (0,_actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec)(args[0], args.slice(1), {
+        listeners: {
+            stdout: (data) => {
+                stream.out += data.toString();
+            },
+            stderr: (data) => {
+                stream.err += data.toString();
+            }
         }
-    ];
+    });
+    if ((0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('job_summary')) {
+        await (0,_summary__WEBPACK_IMPORTED_MODULE_2__/* .writeJobSummary */ .w)(stream.out, stream.err);
+    }
+}
+catch (error) {
+    if (error instanceof Error) {
+        (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed)(error.message);
+    }
+}
+
+__webpack_async_result__();
+} catch(e) { __webpack_async_result__(e); } }, 1);
+
+/***/ }),
+
+/***/ 608:
+/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
+
+"use strict";
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   "w": () => (/* binding */ writeJobSummary)
+/* harmony export */ });
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(186);
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_0__);
+// Copyright 2023 Touca, Inc. Subject to Apache-2.0 License.
+
+async function writeJobSummary(output, error) {
+    if (error) {
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.summary.addBreak();
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.summary.addHeading('Error', 3);
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.summary.addCodeBlock(error);
+    }
+    else {
+        parseReports(output).forEach(printReport);
+    }
+    await _actions_core__WEBPACK_IMPORTED_MODULE_0__.summary.write();
+}
+function parseReports(output) {
+    if (!['Touca Test Runner', 'Ran all test suites'].every((v) => output.includes(v))) {
+        return [];
+    }
+    const lines = output
+        .split('\n')
+        .map((v) => v.trim())
+        .filter((v) => v !== '');
+    const reports = [];
+    while (true) {
+        const head = lines.findIndex((v) => v.startsWith('Suite'));
+        const tail = lines.findIndex((v) => v.startsWith('Link'));
+        if (head === -1 || tail === -1) {
+            break;
+        }
+        const block = lines.splice(head, tail - head + 1);
+        const slugs = block.at(0)?.split(/\s+/).at(1);
+        const link = block.at(-1)?.split(/\s+/).at(1);
+        if (!slugs || !link) {
+            break;
+        }
+        const rows = [];
+        for (const line of block.slice(1, -3)) {
+            const items = line.match(/\s*\d+\.\s+(\w+)\s+(.+)\s+\((.+)\)/);
+            if (!items) {
+                continue;
+            }
+            rows.push({
+                status: items[1],
+                name: items[2],
+                time: items[3]
+            });
+        }
+        if (rows.length !== 0) {
+            reports.push({ slugs, rows, link });
+        }
+    }
+    return reports;
 }
 function printReport(report) {
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.summary.addHeading('Comparison Results for {}/{}', 2)
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.summary.addHeading(`Comparison Results for ${report.slugs}`, 2)
         .addTable([
         ['', 'Status', 'Name', 'Runtime'].map((v) => ({
             data: v,
@@ -44,49 +138,7 @@ function printReport(report) {
     ])
         .addLink('View comparison results on the Touca server', report.link);
 }
-async function runExe() {
-    const args = [(0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('executable')];
-    if ((0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('version') !== '') {
-        args.push('--revision', (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('version'));
-    }
-    await (0,_actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec)(args[0], args.slice(1));
-}
-async function runCli() {
-    await (0,_actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec)('touca', ['version']);
-    const args = ['touca', 'test'];
-    if ((0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('version') !== '') {
-        args.push('--revision', (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('version'));
-    }
-    if ((0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('directory') !== '') {
-        args.push('--testdir', (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('directory'));
-    }
-    const stream = { out: '', err: '' };
-    await (0,_actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec)(args[0], args.slice(1), {
-        listeners: {
-            stdout: (data) => {
-                stream.out += data.toString();
-            },
-            stderr: (data) => {
-                stream.err += data.toString();
-            }
-        }
-    });
-    await (0,_actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec)('touca', ['version']);
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.summary.addHeading('Regression Test Results');
-    parseReports(stream.out).forEach(printReport);
-    await _actions_core__WEBPACK_IMPORTED_MODULE_0__.summary.write();
-}
-try {
-    await ((0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('executable') != '' ? runExe : runCli)();
-}
-catch (error) {
-    if (error instanceof Error) {
-        (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed)(error.message);
-    }
-}
 
-__webpack_async_result__();
-} catch(e) { __webpack_async_result__(e); } }, 1);
 
 /***/ }),
 

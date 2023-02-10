@@ -1,59 +1,18 @@
 // Copyright 2023 Touca, Inc. Subject to Apache-2.0 License.
 
-import { getInput, setFailed, summary } from '@actions/core'
+import { getBooleanInput, getInput, setFailed, summary } from '@actions/core'
 import { exec } from '@actions/exec'
+import { writeJobSummary } from './summary'
 
-type Report = {
-  suite: string
-  version: string
-  rows: Array<Record<'status' | 'name' | 'time', string>>
-  link: string
-}
-
-function parseReports(output: string): Array<Report> {
-  return [
-    {
-      suite: 'Students',
-      version: 'v1.0',
-      rows: [
-        { status: 'SENT', name: 'alice', time: '251 ms' },
-        { status: 'SENT', name: 'bob', time: '245 ms' },
-        { status: 'SENT', name: 'charlie', time: '220 ms' }
-      ],
-      link: 'http://localhost:4200/~/acme/students_2/v1.0'
-    }
-  ]
-}
-
-function printReport(report: Report) {
-  summary
-    .addHeading('Comparison Results for {}/{}', 2)
-    .addTable([
-      ['', 'Status', 'Name', 'Runtime'].map((v) => ({
-        data: v,
-        header: true
-      })),
-      ...report.rows.map((v, i) => [
-        (i + 1).toFixed(0),
-        v.status,
-        v.name,
-        v.time
-      ])
-    ])
-    .addLink('View comparison results on the Touca server', report.link)
-}
-
-async function runExe() {
+function getArgsExe() {
   const args = [getInput('executable')]
   if (getInput('version') !== '') {
     args.push('--revision', getInput('version'))
   }
-  await exec(args[0], args.slice(1))
+  return args
 }
 
-async function runCli() {
-  await exec('touca', ['version'])
-
+function getArgsCli() {
   const args = ['touca', 'test']
   if (getInput('version') !== '') {
     args.push('--revision', getInput('version'))
@@ -61,6 +20,11 @@ async function runCli() {
   if (getInput('directory') !== '') {
     args.push('--testdir', getInput('directory'))
   }
+  return args
+}
+
+try {
+  const args = getInput('executable') != '' ? getArgsExe() : getArgsCli()
   const stream = { out: '', err: '' }
   await exec(args[0], args.slice(1), {
     listeners: {
@@ -72,15 +36,9 @@ async function runCli() {
       }
     }
   })
-
-  await exec('touca', ['version'])
-  summary.addHeading('Regression Test Results')
-  parseReports(stream.out).forEach(printReport)
-  await summary.write()
-}
-
-try {
-  await (getInput('executable') != '' ? runExe : runCli)()
+  if (getBooleanInput('job_summary')) {
+    await writeJobSummary(stream.out, stream.err)
+  }
 } catch (error) {
   if (error instanceof Error) {
     setFailed(error.message)
